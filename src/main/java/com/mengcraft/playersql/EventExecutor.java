@@ -7,7 +7,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
-
 import java.util.UUID;
 
 import static org.bukkit.entity.EntityType.PLAYER;
@@ -108,7 +107,15 @@ public class EventExecutor implements Listener {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
+        disconnect(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void handle(PlayerKickEvent event) {
+        disconnect(event.getPlayer().getUniqueId());
+    }
+
+    private void disconnect(UUID uuid) {
         if (userManager.isUserNotLocked(uuid)) {
             userManager.cancelTask(uuid);
             userManager.syncUser(uuid, true);

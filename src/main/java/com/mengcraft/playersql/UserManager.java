@@ -20,6 +20,7 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import org.bukkit.ChatColor;
 
 /**
  * Created on 16-1-2.
@@ -228,6 +229,16 @@ public final class UserManager {
         }
         createTask(player.getUniqueId());
         unlockUser(player.getUniqueId(), false);
+        fireSafeLogin(player);
+    }
+
+    public void fireSafeLogin(Player P) {
+        SafeLoginEvent event = new SafeLoginEvent(P);
+        main.getServer().getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            String reason = event.getCancelReason();
+            P.kickPlayer(reason == null ? ChatColor.RED + "Kicked" : reason);
+        }
     }
 
     @SuppressWarnings("unchecked")

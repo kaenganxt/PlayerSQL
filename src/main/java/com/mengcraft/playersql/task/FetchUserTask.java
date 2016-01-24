@@ -5,6 +5,8 @@ import com.mengcraft.playersql.EventExecutor;
 import com.mengcraft.playersql.User;
 
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 /**
  * Created on 16-1-2.
@@ -29,6 +31,8 @@ public class FetchUserTask implements Runnable {
                 this.executor.getMain().logMessage("User data " + this.uuid + " not found!");
             }
             this.executor.cancelTask(this.taskId);
+            Player P = Bukkit.getPlayer(this.uuid);
+            if (P != null) this.executor.getUserManager().fireSafeLogin(P);
         } else if (user.isLocked() && this.retryCount++ < 8) {
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " fail " + retryCount + '.');

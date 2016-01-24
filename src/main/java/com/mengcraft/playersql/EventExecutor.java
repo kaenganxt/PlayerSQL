@@ -1,6 +1,5 @@
 package com.mengcraft.playersql;
 
-import com.mengcraft.playersql.task.DailySaveTask;
 import com.mengcraft.playersql.task.FetchUserTask;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
@@ -8,11 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.scheduler.BukkitTask;
-
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.bukkit.event.EventPriority.HIGHEST;
 
@@ -45,7 +40,15 @@ public class EventExecutor implements Listener {
 
     @EventHandler
     public void handle(PlayerQuitEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
+        disconnect(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void handle(PlayerKickEvent event) {
+        disconnect(event.getPlayer().getUniqueId());
+    }
+
+    private void disconnect(UUID uuid) {
         if (userManager.isUserNotLocked(uuid)) {
             userManager.cancelTask(uuid);
             userManager.syncUser(uuid, true);

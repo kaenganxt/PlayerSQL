@@ -14,6 +14,7 @@ import org.json.simple.JSONArray;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -34,6 +35,7 @@ public final class UserManager {
     private final List<UUID> locked;
     private final Map<UUID, User> userMap;
     private final Queue<User> fetched;
+    private final HashSet<UUID> newUsers;
 
     private PluginMain main;
     private ItemUtil itemUtil;
@@ -44,6 +46,7 @@ public final class UserManager {
         this.locked = new ArrayList<>();
         this.userMap = new ConcurrentHashMap<>();
         this.fetched = new ConcurrentLinkedQueue<>();
+        this.newUsers = new HashSet<>();
     }
 
     /**
@@ -53,8 +56,13 @@ public final class UserManager {
         return this.userMap.get(uuid);
     }
 
-    public void addFetched(User user) {
+    public void addFetched(User user, boolean isNew) {
         this.fetched.offer(user);
+        if (isNew) newUsers.add(user.getUuid());
+    }
+
+    public void addFetched(User user) {
+        addFetched(user, true);
     }
 
     /**
@@ -229,7 +237,10 @@ public final class UserManager {
         }
         createTask(player.getUniqueId());
         unlockUser(player.getUniqueId(), false);
-        fireSafeLogin(player);
+        if (newUsers.contains(player.getUniqueId())) {
+            fireSafeLogin(player);
+            newUsers.remove(player.getUniqueId());
+        }
     }
 
     public void fireSafeLogin(Player P) {

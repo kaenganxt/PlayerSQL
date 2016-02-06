@@ -19,6 +19,16 @@ public class FetchUserTask implements Runnable {
     private int taskId;
     private int retryCount;
 
+    private final boolean isReload;
+
+    public FetchUserTask(boolean isReload) {
+        this.isReload = isReload;
+    }
+
+    public FetchUserTask() {
+        this(false);
+    }
+
     @Override
     public synchronized void run() {
         User user = this.executor.getUserManager().fetchUser(this.uuid);
@@ -31,9 +41,11 @@ public class FetchUserTask implements Runnable {
                 this.executor.getMain().logMessage("User data " + this.uuid + " not found!");
             }
             this.executor.cancelTask(this.taskId);
-            Player P = Bukkit.getPlayer(this.uuid);
-            if (P != null) this.executor.getUserManager().fireSafeLogin(P);
-        } else if (user.isLocked() && this.retryCount++ < 8) {
+            if (!isReload) {
+                Player P = Bukkit.getPlayer(this.uuid);
+                if (P != null) this.executor.getUserManager().fireSafeLogin(P);
+            }
+        } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " fail " + retryCount + '.');
             }
@@ -44,7 +56,7 @@ public class FetchUserTask implements Runnable {
             }
 
             this.executor.getUserManager().cacheUser(this.uuid, user);
-            this.executor.getUserManager().addFetched(user);
+            this.executor.getUserManager().addFetched(user, !isReload);
 
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " done.");

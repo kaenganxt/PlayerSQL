@@ -1,6 +1,7 @@
 package com.mengcraft.playersql;
 
 import com.mengcraft.playersql.lib.*;
+import com.mengcraft.playersql.task.FetchUserTask;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import org.bukkit.entity.Player;
@@ -10,6 +11,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
+import org.bukkit.Bukkit;
 
 /**
  * Created on 16-1-2.
@@ -56,6 +58,15 @@ public class PluginMain extends JavaPlugin {
         } catch (IOException e) {
             logException(e);
         }
+        for (Player P : Bukkit.getOnlinePlayers()) {
+            FetchUserTask task = new FetchUserTask(true);
+            task.setUuid(P.getUniqueId());
+            task.setExecutor(eventExecutor);
+            if (Config.DEBUG) {
+                logMessage("Scheduling user load after reload for " + P.getUniqueId() + '.');
+            }
+            task.setTaskId(runTaskTimerAsynchronously(task, Config.SYN_DELAY).getTaskId());
+        }
     }
 
     @Override
@@ -78,7 +89,7 @@ public class PluginMain extends JavaPlugin {
     }
 
     public BukkitTask runTaskTimerAsynchronously(Runnable r, int i) {
-        return getServer().getScheduler().runTaskTimerAsynchronously(this, r, i, i);
+        return getServer().getScheduler().runTaskTimerAsynchronously(this, r, i / 4, i);
     }
 
     public BukkitTask runTaskAsynchronously(Runnable r) {

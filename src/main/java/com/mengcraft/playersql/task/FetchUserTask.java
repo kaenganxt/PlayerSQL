@@ -6,12 +6,15 @@ import com.mengcraft.playersql.User;
 
 import java.util.UUID;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 /**
  * Created on 16-1-2.
  */
 public class FetchUserTask implements Runnable {
+
+    private final String prefix = ChatColor.GRAY + "[" + ChatColor.RED + "SYSTEM" + ChatColor.GRAY + "] " + ChatColor.RESET;
 
     private EventExecutor executor;
     private UUID uuid;
@@ -46,6 +49,13 @@ public class FetchUserTask implements Runnable {
                 if (P != null) this.executor.getUserManager().fireSafeLogin(P);
             }
         } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
+            if (this.retryCount > 1) {
+                Player P = Bukkit.getPlayer(this.uuid);
+                P.sendMessage(prefix + ChatColor.YELLOW + "Nutzerdaten werden geladen...");
+            } else if (this.retryCount > 3 && this.retryCount % 2 == 0) {
+                Player P = Bukkit.getPlayer(this.uuid);
+                P.sendMessage(prefix + ChatColor.RED + "Lädt noch, bitte warten...");
+            }
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " fail " + retryCount + '.');
             }
@@ -60,6 +70,11 @@ public class FetchUserTask implements Runnable {
 
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " done.");
+            }
+
+            if (retryCount > 1) {
+                Player P = Bukkit.getPlayer(this.uuid);
+                P.sendMessage(prefix + ChatColor.GREEN + "Nutzerdaten geladen!");
             }
 
             this.executor.cancelTask(this.taskId);

@@ -1,6 +1,7 @@
 package com.mengcraft.playersql;
 
 import com.mengcraft.playersql.task.FetchUserTask;
+import java.util.HashSet;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,7 @@ public class EventExecutor implements Listener {
 
     private UserManager userManager;
     private PluginMain main;
+    private final HashSet<UUID> disconnected = new HashSet<>();
 
     @EventHandler
     public void handle(PlayerLoginEvent event) {
@@ -25,6 +27,7 @@ public class EventExecutor implements Listener {
         if (Config.DEBUG) {
             main.logMessage("Lock user " + uuid + " done!");
         }
+        disconnected.remove(uuid);
         this.userManager.lockUser(uuid);
     }
 
@@ -49,6 +52,7 @@ public class EventExecutor implements Listener {
     }
 
     private void disconnect(UUID uuid) {
+        if (disconnected.contains(uuid)) return;
         if (userManager.isUserNotLocked(uuid)) {
             userManager.cancelTask(uuid);
             userManager.syncUser(uuid, true);
@@ -56,6 +60,7 @@ public class EventExecutor implements Listener {
                 userManager.saveUser(uuid, false);
                 userManager.cacheUser(uuid, null);
             });
+            disconnected.add(uuid);
         }
     }
 

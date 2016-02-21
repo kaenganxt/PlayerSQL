@@ -167,7 +167,9 @@ public final class UserManager {
     }
 
     public void lockUser(UUID uuid) {
-        this.locked.add(uuid);
+        if (!this.locked.contains(uuid)) {
+            this.locked.add(uuid);
+        }
     }
 
     public void unlockUser(UUID uuid, boolean scheduled) {

@@ -48,7 +48,7 @@ public class FetchUserTask implements Runnable {
                 if (P != null) this.executor.getUserManager().fireSafeLogin(P);
             }
         } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
-            if (this.retryCount > 1) {
+            if (this.retryCount == 2) {
                 Player P = Bukkit.getPlayer(this.uuid);
                 P.sendMessage(prefix + ChatColor.YELLOW + "Nutzerdaten werden geladen...");
             } else if (this.retryCount > 3 && this.retryCount % 2 == 0) {

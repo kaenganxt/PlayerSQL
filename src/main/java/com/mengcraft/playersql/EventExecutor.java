@@ -9,6 +9,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import java.util.UUID;
+import org.bukkit.event.EventPriority;
 
 import static org.bukkit.entity.EntityType.PLAYER;
 import static org.bukkit.event.EventPriority.HIGHEST;
@@ -108,12 +109,12 @@ public class EventExecutor implements Listener {
         task.setTaskId(this.main.runTaskTimerAsynchronously(task, Config.SYN_DELAY).getTaskId());
     }
 
-    @EventHandler
+    @EventHandler(priority=EventPriority.MONITOR)
     public void handle(PlayerQuitEvent event) {
         disconnect(event.getPlayer().getUniqueId());
     }
 
-    @EventHandler
+    @EventHandler(priority=EventPriority.MONITOR)
     public void handle(PlayerKickEvent event) {
         disconnect(event.getPlayer().getUniqueId());
     }

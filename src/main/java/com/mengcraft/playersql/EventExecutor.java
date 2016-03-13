@@ -111,24 +111,32 @@ public class EventExecutor implements Listener {
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void handle(PlayerQuitEvent event) {
-        disconnect(event.getPlayer().getUniqueId());
+        disconnect(event.getPlayer().getUniqueId(), false);
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void handle(PlayerKickEvent event) {
-        disconnect(event.getPlayer().getUniqueId());
+        disconnect(event.getPlayer().getUniqueId(), false);
     }
 
-    private void disconnect(UUID uuid) {
+    public void disconnect(UUID uuid, boolean doSync) {
         if (disconnected.contains(uuid)) return;
         disconnected.add(uuid);
         if (userManager.isUserNotLocked(uuid)) {
-            userManager.cancelTask(uuid);
+            if (!userManager.cancelTask(uuid)) {
+                userManager.cacheUser(uuid, null);
+                return;
+            }
             userManager.syncUser(uuid, true);
-            main.runTaskAsynchronously(() -> {
+            if (doSync) {
                 userManager.saveUser(uuid, false);
                 userManager.cacheUser(uuid, null);
-            });
+            } else {
+                main.runTaskAsynchronously(() -> {
+                    userManager.saveUser(uuid, false);
+                    userManager.cacheUser(uuid, null);
+                });
+            }
         } else {
             userManager.unlockUser(uuid, false);
         }

@@ -34,6 +34,11 @@ public class FetchUserTask implements Runnable {
 
     @Override
     public synchronized void run() {
+        Player P = Bukkit.getPlayer(this.uuid);
+        if (P == null) {
+            this.executor.cancelTask(this.taskId);
+            return;
+        }
         User user = this.executor.getUserManager().fetchUser(this.uuid);
         if (user == null) {
             this.executor.getUserManager().cacheUser(this.uuid);
@@ -44,22 +49,19 @@ public class FetchUserTask implements Runnable {
             }
             this.executor.cancelTask(this.taskId);
             if (!isReload) {
-                Player P = Bukkit.getPlayer(this.uuid);
-                if (P != null) this.executor.getUserManager().fireSafeLogin(P);
+                this.executor.getUserManager().fireSafeLogin(P);
             }
         } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
             if (this.retryCount == 2) {
-                Player P = Bukkit.getPlayer(this.uuid);
                 P.sendMessage(prefix + ChatColor.YELLOW + "Nutzerdaten werden geladen...");
             } else if (this.retryCount > 3 && this.retryCount % 2 == 0) {
-                Player P = Bukkit.getPlayer(this.uuid);
                 P.sendMessage(prefix + ChatColor.RED + "Lädt noch, bitte warten...");
             }
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Load user data " + uuid + " fail " + retryCount + '.');
             }
         } else {
-            this.executor.getUserManager().saveUser(user, true);
+            if (!isReload) this.executor.getUserManager().saveUser(user, true);
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("Lock user data " + uuid + " done.");
             }
@@ -72,7 +74,6 @@ public class FetchUserTask implements Runnable {
             }
 
             if (retryCount > 1) {
-                Player P = Bukkit.getPlayer(this.uuid);
                 P.sendMessage(prefix + ChatColor.GREEN + "Nutzerdaten geladen!");
             }
 

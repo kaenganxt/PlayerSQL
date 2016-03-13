@@ -1,5 +1,6 @@
 package com.mengcraft.playersql;
 
+import com.avaje.ebean.EbeanServer;
 import com.mengcraft.playersql.lib.*;
 import com.mengcraft.playersql.task.FetchUserTask;
 import com.mengcraft.simpleorm.EbeanHandler;
@@ -9,14 +10,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 
 /**
  * Created on 16-1-2.
  */
 public class PluginMain extends JavaPlugin {
+
+    private EventExecutor eventExecutor;
+    private Field server;
 
     @Override
     public void onEnable() {
@@ -45,11 +51,11 @@ public class PluginMain extends JavaPlugin {
         userManager.setItemUtil(itemUtil);
         userManager.setExpUtil(expUtil);
 
-        EventExecutor eventExecutor = new EventExecutor();
+        eventExecutor = new EventExecutor();
         eventExecutor.setMain(this);
         eventExecutor.setUserManager(userManager);
 
-        getServer().getScheduler().runTaskTimer(this, userManager::pendFetched, 1, 1);
+        getServer().getScheduler().runTaskTimer(this, userManager::pendFetched, Config.SYN_DELAY * 2, 1);
 
         getServer().getPluginManager().registerEvents(eventExecutor, this);
 
@@ -74,6 +80,20 @@ public class PluginMain extends JavaPlugin {
         for (Player p : getServer().getOnlinePlayers()) {
             UserManager.INSTANCE.saveUser(p.getUniqueId(), false);
         }
+    }
+
+    @Override
+    public EbeanServer getDatabase() {
+        try {
+            if (server == null) {
+                server = JavaPlugin.class.getDeclaredField("ebean");
+                server.setAccessible(true);
+            }
+            return (EbeanServer) server.get(this);
+        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
+            Logger.getLogger(PluginMain.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     public Player getPlayer(UUID uuid) {
@@ -102,6 +122,10 @@ public class PluginMain extends JavaPlugin {
 
     public BukkitTask runTaskTimer(Runnable r, int i) {
         return getServer().getScheduler().runTaskTimer(this, r, i, i);
+    }
+
+    public EventExecutor getEventExecutor() {
+        return eventExecutor;
     }
 
 }

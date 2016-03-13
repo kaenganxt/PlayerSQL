@@ -94,7 +94,7 @@ public final class UserManager {
         User user = this.userMap.get(uuid);
         if (user == null) {
             if (Config.DEBUG) {
-                this.main.logException(new PluginException("User " + uuid + " not found!"));
+                this.main.logMessage("User " + uuid + " not found!");
             }
         } else {
             saveUser(user, lock);
@@ -307,13 +307,15 @@ public final class UserManager {
         this.main.getServer().getScheduler().cancelTask(i);
     }
 
-    public void cancelTask(UUID uuid) {
+    public boolean cancelTask(UUID uuid) {
         BukkitTask task = taskMap.remove(uuid);
         if (task != null) {
             task.cancel();
+            return true;
         } else if (Config.DEBUG) {
             this.main.logMessage("No task can be canceled for " + uuid + '!');
         }
+        return false;
     }
 
     public void createTask(UUID uuid) {

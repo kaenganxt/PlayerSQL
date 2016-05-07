@@ -1,48 +1,24 @@
 package com.mengcraft.playersql;
 
-import com.avaje.ebean.annotation.UpdatedTimestamp;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/**
- * Created on 16-1-2.
- */
-@Entity
-@Table(name = "PLAYERSQL")
 public class User {
 
-    @Id
     private UUID uuid;
-
     private double health;
-
     private int food;
-
     private int hand;
-
     private int exp;
-
-    @Column(columnDefinition = "TEXT")
     private String inventory;
-
-    @Column(columnDefinition = "TEXT")
     private String armor;
-
-    @Column(columnDefinition = "TEXT")
     private String chest;
-
-    @Column(columnDefinition = "TEXT")
     private String effect;
-
     private boolean locked;
-
-    @UpdatedTimestamp
-    private Timestamp lastUpdate;
+    private int lastUpdate;
 
     public UUID getUuid() {
         return uuid;
@@ -124,12 +100,47 @@ public class User {
         this.locked = locked;
     }
 
-    public Timestamp getLastUpdate() {
+    public int getLastUpdate() {
         return lastUpdate;
     }
 
-    public void setLastUpdate(Timestamp lastUpdate) {
+    public void setLastUpdate(int lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
+    public void save() {
+        setLastUpdate((int) (System.currentTimeMillis() / 1000));
+        PluginMain.getDB().queryUpdate("UPDATE playerData SET health = ?, food = ?, hand = ?, exp = ?, inventory = ?, armor = ?, chest = ?, effect = ?, locked = ?, last_update = ? WHERE uuid = ?",
+                                       getHealth(), getFood(), getHand(), getExp(), getInventory(), getArmor(), getChest(), getEffect(), isLocked(), getLastUpdate(), getUuid().toString());
+    }
+
+
+    public static User get(UUID uuid) {
+        try {
+            ResultSet rs = PluginMain.getDB().querySelect("SELECT * FROM playerData WHERE uuid = ?", uuid.toString());
+            if (rs == null) return get(uuid);
+            if (!rs.next()) return null;
+            User user = new User();
+            user.setUuid(UUID.fromString(rs.getString("uuid")));
+            user.setHealth(rs.getDouble("health"));
+            user.setFood(rs.getInt("food"));
+            user.setHand(rs.getInt("hand"));
+            user.setExp(rs.getInt("exp"));
+            user.setInventory(rs.getString("inventory"));
+            user.setArmor(rs.getString("armor"));
+            user.setChest(rs.getString("chest"));
+            user.setEffect(rs.getString("effect"));
+            user.setLocked(rs.getBoolean("locked"));
+            user.setLastUpdate(rs.getInt("last_update"));
+            return user;
+        } catch (SQLException ex) {
+            Logger.getLogger(User.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public static User insert(UUID uuid) {
+        PluginMain.getDB().queryUpdate("INSERT INTO playerData (uuid, inventory, armor, chest, effect, last_update) VALUES (?, '', '', '', '', ?)", uuid.toString(), (int) (System.currentTimeMillis() / 1000));
+        return get(uuid);
+    }
 }

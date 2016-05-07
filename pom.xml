@@ -13,10 +13,6 @@
 
     <repositories>
         <repository>
-            <id>ci-mengcraft</id>
-            <url>http://ci.mengcraft.com:8080/plugin/repository/everything/</url>
-        </repository>
-        <repository>
             <id>repo-spigot</id>
             <url>http://repo.md-5.net/content/groups/public/</url>
         </repository>
@@ -28,11 +24,6 @@
             <artifactId>bukkit</artifactId>
             <version>1.7.10-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mengcraft</groupId>
-            <artifactId>simpleorm</artifactId>
-            <version>0.1.13</version>
         </dependency>
     </dependencies>
 
@@ -56,13 +47,6 @@
                         <phase>package</phase>
                     </execution>
                 </executions>
-                <configuration>
-                    <artifactSet>
-                        <includes>
-                            <include>com.mengcraft:simpleorm</include>
-                        </includes>
-                    </artifactSet>
-                </configuration>
             </plugin>
         </plugins>
     </build>

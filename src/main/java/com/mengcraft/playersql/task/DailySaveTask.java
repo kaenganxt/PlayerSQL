@@ -32,7 +32,7 @@ public class DailySaveTask implements Runnable {
                 userManager.getMain().logMessage("Save user " + this.uuid + " count " + this.saveCount + '.');
             }
             userManager.syncUser(user);
-            userManager.getMain().runTaskAsynchronously(() -> userManager.saveUser(user, true));
+            userManager.saveUser(user, true);
         }
     }
 

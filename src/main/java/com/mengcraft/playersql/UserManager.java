@@ -33,7 +33,7 @@ public final class UserManager {
 
     private final Map<UUID, BukkitTask> taskMap;
     private final List<UUID> locked;
-    private final Map<UUID, User> userMap;
+    private final Map<UUID, User> cached;
     private final Queue<User> fetched;
     private final HashSet<UUID> newUsers;
 
@@ -44,7 +44,7 @@ public final class UserManager {
     private UserManager() {
         this.taskMap = new ConcurrentHashMap<>();
         this.locked = new ArrayList<>();
-        this.userMap = new ConcurrentHashMap<>();
+        this.cached = new ConcurrentHashMap<>();
         this.fetched = new ConcurrentLinkedQueue<>();
         this.newUsers = new HashSet<>();
     }
@@ -53,7 +53,7 @@ public final class UserManager {
      * @return The user, or <code>null</code> if not exists.
      */
     public User getUser(UUID uuid) {
-        return this.userMap.get(uuid);
+        return this.cached.get(uuid);
     }
 
     public void addFetched(User user, boolean isNew) {
@@ -69,14 +69,14 @@ public final class UserManager {
      * @return The user, or <code>null</code> if not exists.
      */
     public User fetchUser(UUID uuid) {
-        return this.main.getDatabase().find(User.class, uuid);
+        return User.get(uuid);
     }
 
     /**
      * Create and cache a new user.
      */
-    public void cacheUser(UUID uuid) {
-        User user = this.main.getDatabase().createEntityBean(User.class);
+    public void create(UUID uuid) {
+        User user = User.insert(uuid);
         user.setUuid(uuid);
         user.setLocked(true);
         cacheUser(uuid, user);
@@ -84,20 +84,15 @@ public final class UserManager {
 
     public void cacheUser(UUID uuid, User user) {
         if (user == null) {
-            userMap.remove(uuid);
+            cached.remove(uuid);
         } else {
-            userMap.put(uuid, user);
+            cached.put(uuid, user);
         }
     }
 
     public void saveUser(UUID uuid, boolean lock) {
-        User user = this.userMap.get(uuid);
-        if (user == null) {
-            if (Config.DEBUG) {
-                this.main.logMessage("User " + uuid + " not found!");
-            }
-        } else {
-            saveUser(user, lock);
+        if (cached.containsKey(uuid)) {
+            saveUser(cached.get(uuid), lock);
         }
     }
 
@@ -106,8 +101,8 @@ public final class UserManager {
             if (user.isLocked() != lock) {
                 user.setLocked(lock);
             }
-            this.main.getDatabase().save(user);
         }
+        user.save();
         if (Config.DEBUG) {
             this.main.logMessage("Save user data " + user.getUuid() + " done!");
         }
@@ -153,7 +148,7 @@ public final class UserManager {
     }
 
     public void syncUser(UUID uuid, boolean closedInventory) {
-        syncUser(userMap.get(uuid), closedInventory);
+        syncUser(cached.get(uuid), closedInventory);
     }
 
     public boolean isUserLocked(UUID uuid) {
@@ -171,11 +166,8 @@ public final class UserManager {
     }
 
     public void unlockUser(UUID uuid, boolean scheduled) {
-        if (Config.DEBUG) {
-            main.logMessage("Unlock user task on " + Thread.currentThread().getName() + '.');
-        }
         if (scheduled) {
-            this.main.runTask(() -> unlockUser(uuid, false));
+            this.main.runTask(() -> this.locked.remove(uuid));
         } else {
             if (Config.DEBUG) {
                 this.main.logMessage("Unlock user " + uuid + '!');
@@ -205,7 +197,7 @@ public final class UserManager {
             if (Config.DEBUG) {
                 this.main.logException(new PluginException("User " + user.getUuid() + " not found!"));
             }
-            saveUser(user, true);
+            saveUser(user, false);
         });
     }
 
@@ -323,7 +315,7 @@ public final class UserManager {
             this.main.logMessage("Scheduling daily save task for user " + uuid + '.');
         }
         DailySaveTask saveTask = new DailySaveTask();
-        BukkitTask task = this.main.runTaskTimer(saveTask, 6000);
+        BukkitTask task = this.main.runTaskTimerAsynchronously(saveTask, 6000);
         saveTask.setUuid(uuid);
         saveTask.setUserManager(this);
         saveTask.setTaskId(task.getTaskId());

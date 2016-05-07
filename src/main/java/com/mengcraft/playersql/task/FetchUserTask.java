@@ -41,15 +41,15 @@ public class FetchUserTask implements Runnable {
         }
         User user = this.executor.getUserManager().fetchUser(this.uuid);
         if (user == null) {
-            this.executor.getUserManager().cacheUser(this.uuid);
-            this.executor.getUserManager().createTask(this.uuid);
-            this.executor.getUserManager().unlockUser(this.uuid, true);
+            this.executor.cancelTask(this.taskId);
             if (Config.DEBUG) {
                 this.executor.getMain().logMessage("User data " + this.uuid + " not found!");
             }
-            this.executor.cancelTask(this.taskId);
+            this.executor.getUserManager().create(this.uuid);
+            this.executor.getUserManager().createTask(this.uuid);
+            this.executor.getUserManager().unlockUser(this.uuid, true);
             if (!isReload) {
-                this.executor.getUserManager().fireSafeLogin(P);
+                this.executor.getMain().runTask(() -> this.executor.getUserManager().fireSafeLogin(P));
             }
         } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
             if (this.retryCount == 2) {
@@ -61,11 +61,6 @@ public class FetchUserTask implements Runnable {
                 this.executor.getMain().logMessage("Load user data " + uuid + " fail " + retryCount + '.');
             }
         } else {
-            if (!isReload) this.executor.getUserManager().saveUser(user, true);
-            if (Config.DEBUG) {
-                this.executor.getMain().logMessage("Lock user data " + uuid + " done.");
-            }
-
             this.executor.getUserManager().cacheUser(this.uuid, user);
             this.executor.getUserManager().addFetched(user, !isReload);
 
@@ -73,11 +68,15 @@ public class FetchUserTask implements Runnable {
                 this.executor.getMain().logMessage("Load user data " + uuid + " done.");
             }
 
+            this.executor.cancelTask(this.taskId);
+            this.executor.getUserManager().saveUser(user, true);
+            if (Config.DEBUG) {
+                this.executor.getMain().logMessage("Lock user data " + uuid + " done.");
+            }
+
             if (retryCount > 1) {
                 P.sendMessage(prefix + ChatColor.GREEN + "Nutzerdaten geladen!");
             }
-
-            this.executor.cancelTask(this.taskId);
         }
     }
 

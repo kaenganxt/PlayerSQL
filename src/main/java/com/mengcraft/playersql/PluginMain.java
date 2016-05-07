@@ -1,19 +1,13 @@
 package com.mengcraft.playersql;
 
-import com.avaje.ebean.EbeanServer;
 import com.mengcraft.playersql.lib.*;
 import com.mengcraft.playersql.task.FetchUserTask;
-import com.mengcraft.simpleorm.EbeanHandler;
-import com.mengcraft.simpleorm.EbeanManager;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 
 /**
@@ -22,7 +16,7 @@ import org.bukkit.Bukkit;
 public class PluginMain extends JavaPlugin {
 
     private EventExecutor eventExecutor;
-    private Field server;
+    private static MySQL db;
 
     @Override
     public void onEnable() {
@@ -32,19 +26,20 @@ public class PluginMain extends JavaPlugin {
         ItemUtil itemUtil = new ItemUtilHandler(this).handle();
         ExpUtil expUtil = new ExpUtilHandler(this).handle();
 
-        EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
-        if (db.isNotInitialized()) {
-            db.define(User.class);
-
-            db.setMaxSize(getConfig().getInt("plugin.max-db-connection"));
-            try {
-                db.initialize();
-            } catch (Exception e) {
-                throw new PluginException("Can't connect to database!", e);
-            }
-        }
-        db.install();
-        db.reflect();
+        db = new MySQL(this, "thetown");
+        db.queryUpdate("CREATE TABLE IF NOT EXISTS `playerData` (" +
+                    "  `uuid` varchar(40) NOT NULL," +
+                    "  `health` double DEFAULT NULL," +
+                    "  `food` int(11) DEFAULT NULL," +
+                    "  `hand` int(11) DEFAULT NULL," +
+                    "  `exp` int(11) DEFAULT NULL," +
+                    "  `inventory` text," +
+                    "  `armor` text," +
+                    "  `chest` text," +
+                    "  `effect` text," +
+                    "  `locked` tinyint(1) DEFAULT '0'," +
+                    "  `last_update` int(11) NOT NULL" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
 
         UserManager userManager = UserManager.INSTANCE;
         userManager.setMain(this);
@@ -59,11 +54,10 @@ public class PluginMain extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(eventExecutor, this);
 
-        try {
-            new Metrics(this).start();
-        } catch (IOException e) {
-            logException(e);
+        for (Player P : Bukkit.getOnlinePlayers()) {
+            userManager.lockUser(P.getUniqueId());
         }
+
         for (Player P : Bukkit.getOnlinePlayers()) {
             FetchUserTask task = new FetchUserTask(true);
             task.setUuid(P.getUniqueId());
@@ -78,22 +72,13 @@ public class PluginMain extends JavaPlugin {
     @Override
     public void onDisable() {
         for (Player p : getServer().getOnlinePlayers()) {
+            UserManager.INSTANCE.syncUser(p.getUniqueId(), true);
             UserManager.INSTANCE.saveUser(p.getUniqueId(), false);
         }
     }
 
-    @Override
-    public EbeanServer getDatabase() {
-        try {
-            if (server == null) {
-                server = JavaPlugin.class.getDeclaredField("ebean");
-                server.setAccessible(true);
-            }
-            return (EbeanServer) server.get(this);
-        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
-            Logger.getLogger(PluginMain.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
+    public static MySQL getDB() {
+        return db;
     }
 
     public Player getPlayer(UUID uuid) {

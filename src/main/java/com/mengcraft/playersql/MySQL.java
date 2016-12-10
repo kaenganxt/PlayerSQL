@@ -52,8 +52,9 @@ public class MySQL {
             int port = config.getInt("port");
             String username = config.getString("username");
             String pw = config.getString("pw");
+            String dataB = config.getString("db", db);
             Class.forName("com.mysql.jdbc.Driver");
-            Connection connLoc = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, username, pw);
+            Connection connLoc = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + dataB, username, pw);
             this.conn = connLoc;
             return true;
         } catch (ClassNotFoundException | SQLException e) {

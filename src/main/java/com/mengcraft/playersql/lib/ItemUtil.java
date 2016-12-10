@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import org.bukkit.inventory.ItemStack;
 import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
+@SuppressWarnings("unchecked")
 public interface ItemUtil {
 
     String convert(ItemStack in) throws Exception;
@@ -20,11 +21,11 @@ public interface ItemUtil {
     ItemStack convert(String in) throws Exception;
 
     class WarpedItemUtil implements ItemUtil {
-        
+
         private static final String path = "com.comphenix.protocol.utility.StreamSerializer";
-        
+
         private Object handle;
-        
+
         private Class<?> serializer;
 
         private Method serializeItemStack;
@@ -67,7 +68,7 @@ public interface ItemUtil {
         }
 
     }
-    
+
     @SuppressWarnings("all")
     public static class SimpleItemUtil implements ItemUtil {
 
@@ -77,7 +78,6 @@ public interface ItemUtil {
         private Method save;
         private Method write;
         private Method load;
-        private Method create;
 
         private Class craftItemStack;
         private Class nbtTagCompound;
@@ -85,10 +85,11 @@ public interface ItemUtil {
         private Class itemStack;
 
         private Object a;
-        
+
+        private Constructor create;
         private Constructor copy;
         private Constructor mirror;
-        
+
         private Field handle;
 
         @Override
@@ -140,9 +141,9 @@ public interface ItemUtil {
 
         private Object create(Object tag) throws Exception {
             if (create == null) {
-                create = itemStack.getMethod("createStack", nbtTagCompound);
+                create = itemStack.getConstructor(nbtTagCompound);
             }
-            return create.invoke(itemStack, tag);
+            return create.newInstance(tag);
         }
 
         private Object load(String in) throws Exception {

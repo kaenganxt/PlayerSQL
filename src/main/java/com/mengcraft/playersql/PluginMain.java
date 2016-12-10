@@ -39,7 +39,7 @@ public class PluginMain extends JavaPlugin {
                     "  `effect` text," +
                     "  `locked` tinyint(1) DEFAULT '0'," +
                     "  `last_update` int(11) NOT NULL" +
-                    ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+                    ") ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='PlayerSQL | kaenganxt'");
 
         UserManager userManager = UserManager.INSTANCE;
         userManager.setMain(this);

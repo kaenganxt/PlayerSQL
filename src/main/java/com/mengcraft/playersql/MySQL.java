@@ -53,11 +53,10 @@ public class MySQL {
             String username = config.getString("username");
             String pw = config.getString("pw");
             String dataB = config.getString("db", db);
-            Class.forName("com.mysql.jdbc.Driver");
-            Connection connLoc = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + dataB, username, pw);
+            Connection connLoc = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + dataB + "?serverTimezone=Europe/Berlin", username, pw);
             this.conn = connLoc;
             return true;
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
             System.err.println(e.getLocalizedMessage());
             return false;
         }

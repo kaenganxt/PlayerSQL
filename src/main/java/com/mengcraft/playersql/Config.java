@@ -30,5 +30,4 @@ public class Config {
         SYN_DELAY = CONF.getInt("plugin.delay", 30);
         DEBUG = CONF.getBoolean("plugin.debug", false);
     }
-
 }

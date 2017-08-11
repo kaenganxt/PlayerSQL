@@ -61,10 +61,6 @@ public final class UserManager {
         if (isNew) newUsers.add(user.getUuid());
     }
 
-    public void addFetched(User user) {
-        addFetched(user, true);
-    }
-
     /**
      * @return The user, or <code>null</code> if not exists.
      */
@@ -195,7 +191,7 @@ public final class UserManager {
             pend(user, player);
         } else this.main.runTaskAsynchronously(() -> {
             if (Config.DEBUG) {
-                this.main.logException(new PluginException("User " + user.getUuid() + " not found!"));
+                this.main.logException(new RuntimeException("User " + user.getUuid() + " not found!"));
             }
             saveUser(user, false);
         });
@@ -232,6 +228,8 @@ public final class UserManager {
         if (newUsers.contains(player.getUniqueId())) {
             fireSafeLogin(player);
             newUsers.remove(player.getUniqueId());
+        } else {
+            fireReloadInv(player);
         }
     }
 
@@ -242,6 +240,11 @@ public final class UserManager {
             String reason = event.getCancelReason();
             P.kickPlayer(reason == null ? ChatColor.RED + "Kicked" : reason);
         }
+    }
+
+    public void fireReloadInv(Player P) {
+        ReloadInvEvent event = new ReloadInvEvent(P);
+        main.getServer().getPluginManager().callEvent(event);
     }
 
     @SuppressWarnings("unchecked")
@@ -343,5 +346,4 @@ public final class UserManager {
     public PluginMain getMain() {
         return main;
     }
-
 }

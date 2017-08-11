@@ -50,6 +50,8 @@ public class FetchUserTask implements Runnable {
             this.executor.getUserManager().unlockUser(this.uuid, true);
             if (!isReload) {
                 this.executor.getMain().runTask(() -> this.executor.getUserManager().fireSafeLogin(P));
+            } else {
+                this.executor.getMain().runTask(() -> this.executor.getUserManager().fireReloadInv(P));
             }
         } else if (!isReload && user.isLocked() && this.retryCount++ < 8) {
             if (this.retryCount == 2) {

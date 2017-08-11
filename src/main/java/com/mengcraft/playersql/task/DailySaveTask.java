@@ -1,7 +1,6 @@
 package com.mengcraft.playersql.task;
 
 import com.mengcraft.playersql.Config;
-import com.mengcraft.playersql.PluginException;
 import com.mengcraft.playersql.User;
 import com.mengcraft.playersql.UserManager;
 
@@ -23,7 +22,7 @@ public class DailySaveTask implements Runnable {
         User user = userManager.getUser(this.uuid);
         if (user == null) {
             if (Config.DEBUG) {
-                userManager.getMain().logException(new PluginException("User " + this.uuid + " not cached!"));
+                userManager.getMain().logException(new RuntimeException("User " + this.uuid + " not cached!"));
             }
             userManager.cancelTask(this.taskId);
         } else {
